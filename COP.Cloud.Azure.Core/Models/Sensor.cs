@@ -5,6 +5,11 @@ namespace COP.Cloud.Azure.Core.Models
 {
     public class Sensor : TableEntity
     {
+        public Sensor()
+        {
+            PartitionKey = string.Empty;
+        }
+
         [IgnoreProperty]
         public string Id
         {
@@ -24,7 +29,7 @@ namespace COP.Cloud.Azure.Core.Models
         public double Min { get; set; }
 
         public double Max { get; set; }
-
+        
         public DateTimeOffset LastSeen { get; set; } = DateTimeOffset.MinValue;
     }
 

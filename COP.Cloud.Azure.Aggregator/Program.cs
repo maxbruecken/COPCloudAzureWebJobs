@@ -23,26 +23,12 @@ namespace COP.Cloud.Azure.Aggregator
 
             StorageQueue.FromName("incoming-sensor-data").CreateIfNotExists();
             StorageQueue.FromName("aggregated-sensor-data").CreateIfNotExists();
-            StorageTable.FromName("sensors").CreateIfNotExists(CreateSensors);
+            StorageTable.FromName("sensors").CreateIfNotExists();
             StorageTable.FromName("sensoralarms").CreateIfNotExists();
 
             var host = new JobHost(config);
             // The following code ensures that the WebJob will be running continuously
             host.RunAndBlock();
-        }
-
-        private static void CreateSensors(CloudTable sensors)
-        {
-            if (sensors.CreateQuery<Sensor>().Any()) return;
-            foreach (var sensorNumber in Enumerable.Range(0, 20))
-            {
-                var sensor = new Sensor { Id = Guid.NewGuid().ToString(), Type = SensorType.Temperature, Min = -40, Max = 100 };
-                var insertOperaton = TableOperation.Insert(sensor);
-                sensors.Execute(insertOperaton);
-                sensor = new Sensor { Id = Guid.NewGuid().ToString(), Type = SensorType.Voltage, Min = 384, Max = 404 };
-                insertOperaton = TableOperation.Insert(sensor);
-                sensors.Execute(insertOperaton);
-            }
         }
     }
 }

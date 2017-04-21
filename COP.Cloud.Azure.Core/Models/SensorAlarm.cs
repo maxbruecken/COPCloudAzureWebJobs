@@ -5,6 +5,11 @@ namespace COP.Cloud.Azure.Core.Models
 {
     public class SensorAlarm : TableEntity
     {
+        public SensorAlarm()
+        {
+            RowKey = Guid.NewGuid().ToString();
+        }
+
         [IgnoreProperty]
         public string SensorId
         {
@@ -12,7 +17,7 @@ namespace COP.Cloud.Azure.Core.Models
             set { PartitionKey = value; }
         }
 
-        public DateTimeOffset TimeStamp { get; set; } = DateTimeOffset.UtcNow;
+        public DateTimeOffset FiredAt { get; set; } = DateTimeOffset.UtcNow;
 
         [IgnoreProperty]
         public AlarmStatus Status { get; set; }

@@ -11,6 +11,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "COP.Cloud.Azure.Writer", "C
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "COP.Cloud.Azure.Validator", "COP.Cloud.Azure.Validator\COP.Cloud.Azure.Validator.csproj", "{A9DC7A5E-F373-4628-8E29-217857059A9F}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "COP.Cloud.Azure.FakeSensors", "COP.Cloud.Azure.FakeSensors\COP.Cloud.Azure.FakeSensors.csproj", "{F7E195DB-04EA-459D-BB55-69290DA35982}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -33,6 +35,10 @@ Global
 		{A9DC7A5E-F373-4628-8E29-217857059A9F}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{A9DC7A5E-F373-4628-8E29-217857059A9F}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{A9DC7A5E-F373-4628-8E29-217857059A9F}.Release|Any CPU.Build.0 = Release|Any CPU
+		{F7E195DB-04EA-459D-BB55-69290DA35982}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{F7E195DB-04EA-459D-BB55-69290DA35982}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{F7E195DB-04EA-459D-BB55-69290DA35982}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{F7E195DB-04EA-459D-BB55-69290DA35982}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

@@ -1,10 +1,11 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.Linq;
+using System.Net;
 using System.Threading.Tasks;
 using COP.Cloud.Azure.Core.Models;
 using Microsoft.Azure.WebJobs;
 using Microsoft.Azure.WebJobs.Host;
+using Microsoft.WindowsAzure.Storage;
 using Microsoft.WindowsAzure.Storage.Queue;
 using Microsoft.WindowsAzure.Storage.Table;
 using Newtonsoft.Json;
@@ -42,6 +43,7 @@ namespace COP.Cloud.Azure.Validator
             if (sensor.LastSeen < DateTimeOffset.UtcNow)
             {
                 sensor.LastSeen = DateTimeOffset.UtcNow;
+                sensor.ETag = "*"; // disable optimistic locking
                 var mergeOperation = TableOperation.Merge(sensor);
                 await sensors.ExecuteAsync(mergeOperation);
             }
@@ -51,13 +53,32 @@ namespace COP.Cloud.Azure.Validator
         {
             if (aggregatedSensorData.Value < sensor.Min || aggregatedSensorData.Value > sensor.Max)
             {
-                var sensorAlarm = new SensorAlarm { Status = AlarmStatus.InvalidData };
-                var insertOperation = TableOperation.Insert(sensorAlarm);
-                await sensorAlarms.ExecuteAsync(insertOperation);
+                await CreateSensorAlarm(sensorAlarms, sensor, AlarmStatus.InvalidData);
             }
         }
 
-        public static async Task CheckSensors([TimerTrigger("0 */1 * * * * *", RunOnStartup = true)] TimerInfo timerInfo,
+        private static async Task CreateSensorAlarm(CloudTable sensorAlarms, Sensor s, AlarmStatus alarmStatus, bool singleton = false)
+        {
+            if (singleton)
+            {
+                var existingAlarm = sensorAlarms.CreateQuery<SensorAlarm>().Where(a => a.PartitionKey == s.Id && a.StatusString == alarmStatus.ToString()).FirstOrDefault();
+                if (existingAlarm != null) return;
+            }
+            var sensorAlarm = new SensorAlarm
+            {
+                SensorId = s.Id,
+                Status = alarmStatus
+            };
+            var insertOperation = TableOperation.Insert(sensorAlarm);
+            await sensorAlarms.ExecuteAsync(insertOperation).ConfigureAwait(false);
+        }
+
+        private static async Task ForwardAggregatedSensorData(AggregatedSensorData aggregatedSensorData, CloudQueue validatedSensorDataQueue)
+        {
+            await validatedSensorDataQueue.AddMessageAsync(new CloudQueueMessage(JsonConvert.SerializeObject(aggregatedSensorData)));
+        }
+        
+        public static async Task CheckSensorsAndAlarms([TimerTrigger("0 */1 * * * *", RunOnStartup = true)] TimerInfo timerInfo,
             [Table("sensors")] CloudTable sensors,
             [Table("sensoralarms")] CloudTable sensorAlarms)
         {
@@ -72,12 +93,7 @@ namespace COP.Cloud.Azure.Validator
                 .CreateQuery<Sensor>()
                 .Where(s => s.LastSeen < deadLine)
                 .ToList()
-                .Select(s =>
-                {
-                    var sensorAlarm = new SensorAlarm {Status = AlarmStatus.Dead};
-                    var insertOperation = TableOperation.Insert(sensorAlarm);
-                    return sensorAlarms.ExecuteAsync(insertOperation);
-                });
+                .Select(s => CreateSensorAlarm(sensorAlarms, s, AlarmStatus.Dead, true));
             await Task.WhenAll(tasks).ConfigureAwait(false);
         }
 
@@ -91,20 +107,23 @@ namespace COP.Cloud.Azure.Validator
                 {
                     return sensorAlarms
                         .CreateQuery<SensorAlarm>()
-                        .Where(a => a.StatusString == AlarmStatus.Dead.ToString())
+                        .Where(a => a.PartitionKey == s.Id && a.StatusString == AlarmStatus.Dead.ToString())
                         .ToList();
                 })
-                .Select(a =>
+                .Select(async a =>
                 {
+                    a.ETag = "*"; //disable optimistic locking
                     var deleteOperation = TableOperation.Delete(a);
-                    return sensorAlarms.ExecuteAsync(deleteOperation);
+                    try
+                    {
+                        await sensorAlarms.ExecuteAsync(deleteOperation).ConfigureAwait(false);
+                    }
+                    catch (StorageException e)
+                    {
+                        if (e.RequestInformation.HttpStatusCode != (int) HttpStatusCode.NotFound) throw;
+                    }
                 });
             await Task.WhenAll(tasks).ConfigureAwait(false);
-        }
-
-        private static async Task ForwardAggregatedSensorData(AggregatedSensorData aggregatedSensorData, CloudQueue validatedSensorDataQueue)
-        {
-            await validatedSensorDataQueue.AddMessageAsync(new CloudQueueMessage(JsonConvert.SerializeObject(aggregatedSensorData)));
         }
     }
 }
