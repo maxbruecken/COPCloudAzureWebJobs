@@ -1,6 +1,8 @@
-﻿using Microsoft.Azure.WebJobs;
+﻿using System;
+using Microsoft.Azure.WebJobs;
 using Microsoft.Azure.WebJobs.Host;
 using Microsoft.WindowsAzure.Storage;
+using Microsoft.WindowsAzure.Storage.Table;
 
 namespace COP.Cloud.Azure.Core.Configuration
 {
@@ -18,7 +20,7 @@ namespace COP.Cloud.Azure.Core.Configuration
             return new StorageTable(name);
         }
 
-        public void CreateIfNotExists()
+        public void CreateIfNotExists(Action<CloudTable> initializer = null)
         {
             var connectionString = AmbientConnectionStringProvider.Instance.GetConnectionString(ConnectionStringNames.Storage);
             var storageAccount = CloudStorageAccount.Parse(connectionString);
@@ -27,6 +29,8 @@ namespace COP.Cloud.Azure.Core.Configuration
             var cloudTable = tableClient.GetTableReference(_name);
 
             cloudTable.CreateIfNotExists();
+
+            initializer?.Invoke(cloudTable);
         }
     }
 }

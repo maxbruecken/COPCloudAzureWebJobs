@@ -25,7 +25,7 @@ namespace COP.Cloud.Azure.Core.Models
 
         public double Max { get; set; }
 
-        public DateTimeOffset LastSeen { get; set; }
+        public DateTimeOffset LastSeen { get; set; } = DateTimeOffset.MinValue;
     }
 
     public enum SensorType

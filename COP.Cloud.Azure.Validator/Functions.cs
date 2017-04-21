@@ -21,17 +21,15 @@ namespace COP.Cloud.Azure.Validator
         {
             log.Info($"Incoming aggregated sensor data: sensor id {aggregatedSensorData.SensorId}.");
 
-            if (aggregatedSensorData.AggregationType != AggregationType.Mean)
-            {
-                await ForwardAggregatedSensorData(aggregatedSensorData, validatedSensorDataQueue);
-            }
-
             var sensor = sensors.CreateQuery<Sensor>().Where(s => s.RowKey == aggregatedSensorData.SensorId).ToList().SingleOrDefault();
 
             if (sensor != null)
             {
-                await CheckSensorLastSeen(sensors, sensor);
-                await ValidateAggregatedData(aggregatedSensorData, sensorAlarms, sensor);
+                await CheckSensorAndUpdateLastSeen(sensors, sensor);
+                if (aggregatedSensorData.AggregationType == AggregationType.Mean)
+                {
+                    await ValidateAggregatedData(aggregatedSensorData, sensorAlarms, sensor);
+                }
                 await ForwardAggregatedSensorData(aggregatedSensorData, validatedSensorDataQueue);
                 return;
             }
@@ -39,7 +37,7 @@ namespace COP.Cloud.Azure.Validator
             log.Error($"No sensor found for id {aggregatedSensorData.SensorId}");
         }
 
-        private static async Task CheckSensorLastSeen(CloudTable sensors, Sensor sensor)
+        private static async Task CheckSensorAndUpdateLastSeen(CloudTable sensors, Sensor sensor)
         {
             if (sensor.LastSeen < DateTimeOffset.UtcNow)
             {
