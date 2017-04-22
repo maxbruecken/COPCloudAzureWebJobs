@@ -19,8 +19,7 @@ namespace COP.Cloud.Azure.Writer
             config.Queues.MaxPollingInterval = TimeSpan.FromSeconds(5);
 
             StorageQueue.FromName("validated-sensor-data").CreateIfNotExists();
-            StorageTable.FromName("sensors").CreateIfNotExists();
-            StorageTable.FromName("sensoralarms").CreateIfNotExists();
+            StorageTable.FromName("sensordata").CreateIfNotExists();
 
             var host = new JobHost(config);
             // The following code ensures that the WebJob will be running continuously
