@@ -8,7 +8,7 @@ namespace COP.Cloud.Azure.Writer
 {
     public class Functions
     {
-        public static async Task ValidateAggregatedSensorDataAsync([QueueTrigger("validated-sensor-data")] AggregatedSensorData validatedSensorData,
+        public static async Task WriteValidatedSensorDataAsync([QueueTrigger("validated-sensor-data")] AggregatedSensorData validatedSensorData,
             [Table("sensordata")] CloudTable sensordatas,
             TraceWriter log)
         {
