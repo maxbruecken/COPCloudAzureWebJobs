@@ -25,12 +25,12 @@ namespace COP.Cloud.Azure.Core.Models
             get { return Type.ToString(); }
             set { Type = (SensorType)Enum.Parse(typeof(SensorType), value); }
         }
-
+        
         public double Min { get; set; }
-
+        
         public double Max { get; set; }
         
-        public DateTimeOffset LastSeen { get; set; } = DateTimeOffset.MinValue;
+        public DateTimeOffset LastSeen { get; set; } = new DateTimeOffset(new DateTime(1970, 1, 1, 0, 0, 0, DateTimeKind.Utc));
     }
 
     public enum SensorType

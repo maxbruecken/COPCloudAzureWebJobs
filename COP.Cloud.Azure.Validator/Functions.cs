@@ -40,9 +40,10 @@ namespace COP.Cloud.Azure.Validator
 
         private static async Task CheckSensorAndUpdateLastSeen(CloudTable sensors, Sensor sensor)
         {
-            if (sensor.LastSeen < DateTimeOffset.UtcNow)
+            var now = DateTimeOffset.UtcNow;
+            if (sensor.LastSeen < now)
             {
-                sensor.LastSeen = DateTimeOffset.UtcNow;
+                sensor.LastSeen = now;
                 sensor.ETag = "*"; // disable optimistic locking
                 var mergeOperation = TableOperation.Merge(sensor);
                 await sensors.ExecuteAsync(mergeOperation);

@@ -11,7 +11,7 @@ namespace COP.Cloud.Azure.FakeSensors
 {
     public class Functions
     {
-        public static async Task CreateFakeSensorData([TimerTrigger("00:00:30", RunOnStartup = true)] TimerInfo timerInfo,
+        public static async Task CreateFakeSensorData([TimerTrigger("00:00:10", RunOnStartup = true)] TimerInfo timerInfo,
             [Table("sensors")] CloudTable sensors,
             [Queue("incoming-sensor-data")] CloudQueue incomingSensorDataQueue)
         {
@@ -24,7 +24,7 @@ namespace COP.Cloud.Azure.FakeSensors
                     var sensorData = new SensorData
                     {
                         SensorId = s.Id,
-                        Values = Enumerable.Range(0, 300).Select(_ => random.NextDouble() * (s.Max - s.Min) + s.Min)
+                        Values = Enumerable.Range(0, 500).Select(_ => random.NextDouble() * (s.Max - s.Min) + s.Min)
                     };
                     await incomingSensorDataQueue.AddMessageAsync(new CloudQueueMessage(JsonConvert.SerializeObject(sensorData)));
                 });
