@@ -12,7 +12,7 @@ namespace COP.Cloud.Azure.FakeSensors
 {
     class Program
     {
-        private const int SensorCount = 5;
+        private const int BatteryCount = 50;
         private static readonly TimeSpan SensorDataDelay = TimeSpan.FromSeconds(10);
         private static readonly int SensorDataCount = (int)SensorDataDelay.TotalMilliseconds / 20;
 
@@ -61,7 +61,7 @@ namespace COP.Cloud.Azure.FakeSensors
         private static void CreateSensors(CloudTable sensors)
         {
             if (sensors.CreateQuery<Sensor>().FirstOrDefault() != null) return;
-            foreach (var _ in Enumerable.Range(0, SensorCount))
+            foreach (var _ in Enumerable.Range(0, BatteryCount))
             {
                 var sensor = new Sensor {Id = Guid.NewGuid().ToString(), Type = SensorType.Temperature, Min = -40, Max = 100};
                 var insertOperaton = TableOperation.Insert(sensor);
