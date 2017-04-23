@@ -1,6 +1,7 @@
 ﻿using Microsoft.Azure.WebJobs;
 using Microsoft.Azure.WebJobs.Host;
 using Microsoft.WindowsAzure.Storage;
+using Microsoft.WindowsAzure.Storage.Queue;
 
 namespace COP.Cloud.Azure.Core.Configuration
 {
@@ -27,6 +28,18 @@ namespace COP.Cloud.Azure.Core.Configuration
             var cloudQueue = queueClient.GetQueueReference(_name);
 
             cloudQueue.CreateIfNotExists();
+        }
+
+        public CloudQueue UnderlyingCloudQueue
+        {
+            get
+            {
+                var connectionString = AmbientConnectionStringProvider.Instance.GetConnectionString(ConnectionStringNames.Storage);
+                var storageAccount = CloudStorageAccount.Parse(connectionString);
+                var queueClient = storageAccount.CreateCloudQueueClient();
+
+                return queueClient.GetQueueReference(_name);
+            }
         }
     }
 }

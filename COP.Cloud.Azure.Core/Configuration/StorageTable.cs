@@ -32,5 +32,17 @@ namespace COP.Cloud.Azure.Core.Configuration
 
             initializer?.Invoke(cloudTable);
         }
+
+        public CloudTable UnderlyingCloudTable
+        {
+            get
+            {
+                var connectionString = AmbientConnectionStringProvider.Instance.GetConnectionString(ConnectionStringNames.Storage);
+                var storageAccount = CloudStorageAccount.Parse(connectionString);
+                var tableClient = storageAccount.CreateCloudTableClient();
+
+                return tableClient.GetTableReference(_name);
+            }
+        }
     }
 }
