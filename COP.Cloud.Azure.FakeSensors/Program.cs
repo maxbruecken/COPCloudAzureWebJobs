@@ -12,7 +12,7 @@ namespace COP.Cloud.Azure.FakeSensors
 {
     class Program
     {
-        private const int SensorCount = 50;
+        private const int SensorCount = 5;
         private static readonly TimeSpan SensorDataDelay = TimeSpan.FromSeconds(10);
         private static readonly int SensorDataCount = (int)SensorDataDelay.TotalMilliseconds / 20;
 
@@ -37,9 +37,15 @@ namespace COP.Cloud.Azure.FakeSensors
                             SensorId = s.Id,
                             Values = Enumerable.Range(0, SensorDataCount).Select(_ => random.NextDouble() * (s.Max - s.Min) + s.Min)
                         };
-                        await incomingSensorDataQueue.AddMessageAsync(new CloudQueueMessage(JsonConvert.SerializeObject(sensorData)), cancellationToken);
-
-                        await Task.Delay(SensorDataDelay, cancellationToken);
+                        try
+                        {
+                            await incomingSensorDataQueue.AddMessageAsync(new CloudQueueMessage(JsonConvert.SerializeObject(sensorData)), cancellationToken);
+                            await Task.Delay(SensorDataDelay, cancellationToken);
+                        }
+                        catch (TaskCanceledException)
+                        {
+                        }
+                        
                     }
                 })
                 .ToArray();
@@ -49,7 +55,7 @@ namespace COP.Cloud.Azure.FakeSensors
 
             cancellationTokenSource.Cancel();
 
-            Task.WaitAll(sensorTasks, cancellationToken);
+            Task.WaitAll(sensorTasks);
         }
 
         private static void CreateSensors(CloudTable sensors)
