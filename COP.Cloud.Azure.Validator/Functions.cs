@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Concurrent;
 using System.Linq;
 using System.Net;
 using System.Threading.Tasks;
@@ -14,6 +15,8 @@ namespace COP.Cloud.Azure.Validator
 {
     public class Functions
     {
+        private static readonly ConcurrentDictionary<string, SensorHolder> Sensors = new ConcurrentDictionary<string, SensorHolder>();
+
         public static async Task ValidateAggregatedSensorDataAsync([QueueTrigger("aggregated-sensor-data")] AggregatedSensorData aggregatedSensorData,
             [Queue("validated-sensor-data")] CloudQueue validatedSensorDataQueue,
             [Table("sensors")] CloudTable sensors,
@@ -22,7 +25,9 @@ namespace COP.Cloud.Azure.Validator
         {
             log.Info($"Incoming aggregated sensor data: sensor id {aggregatedSensorData.SensorId}.");
 
-            var sensor = sensors.CreateQuery<Sensor>().Where(s => s.RowKey == aggregatedSensorData.SensorId).ToList().SingleOrDefault();
+            var sensor = Sensors
+                .GetOrAdd(aggregatedSensorData.SensorId, id => new SensorHolder(sensors.CreateQuery<Sensor>().Where(s => s.RowKey == id).ToList().SingleOrDefault()))
+                .Sensor;
 
             if (sensor != null)
             {
@@ -126,5 +131,15 @@ namespace COP.Cloud.Azure.Validator
                 });
             await Task.WhenAll(tasks).ConfigureAwait(false);
         }
+    }
+
+    internal class SensorHolder
+    {
+        internal SensorHolder(Sensor sensor)
+        {
+            Sensor = sensor;
+        }
+
+        public Sensor Sensor { get; }
     }
 }
